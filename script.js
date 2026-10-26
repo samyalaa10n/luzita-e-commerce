@@ -442,6 +442,13 @@ function checkout() {
 
   if (!rows.length) return;
 
+  const missingSize = rows.some((x) => !x.size || !String(x.size).trim());
+
+  if (missingSize) {
+    toast("من فضلك حدد المقاس لكل صنف قبل تأكيد الطلب");
+    return;
+  }
+
   const total = rows.reduce((sum, x) => sum + x.p.pack_price * x.quantity, 0);
 
   const deposit = total * 0.1;
@@ -663,7 +670,9 @@ document.addEventListener("submit", function (e) {
     "تفاصيل الطلب:",
     ...rows.map(
       (x) =>
-        `- ${x.p.name}
+        `
+       كود الصنف: ${x.p.code}
+      اسم الصنف: ${x.p.name} 
 المقاس: ${x.size || "غير محدد"}
 الكمية: ${x.quantity} عبوة × ${x.p.pack_qty} قطعة
 السعر: ${money(x.p.pack_price * x.quantity)}`,
@@ -674,7 +683,6 @@ document.addEventListener("submit", function (e) {
     `رقم تحويل العربون: ${depositNumber}`,
     "",
     "تعليمات العربون:",
-    "يرجى تحويل العربون إلى الرقم الموضح أعلاه.",
     "بعد تأكيد الطلب من الموقع، سأرسل صورة التحويل على واتساب المتجر.",
   ]
     .filter(Boolean)
