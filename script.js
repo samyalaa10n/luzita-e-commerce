@@ -412,7 +412,7 @@ function cartPage() {
               ) => `<article class="product"><div class="product-img"><img src="${x.p.image_url}" alt="${x.p.name}"></div><div class="product-body"><h3>${x.p.name}</h3> <div class="meta">${x.p.pack_qty} قطعة في العبوة</div>
 <div class="cart-options">
   المقاس: ${x.size || "غير محدد"}
-</div> <div class="price">${money(x.p.pack_price * x.quantity)}</div><div class="quantity"><button data-dec="${x.productId}">−</button><b>${x.quantity}</b><button data-inc="${x.productId}">+</button></div><button class="btn outline" data-remove="${x.productId}">حذف</button></div></article>`,
+</div> <div class="price">${money(x.p.pack_price * x.quantity)}</div><div class="quantity"><button data-dec="${x.productId}">−</button><b>${x.quantity}</b><button data-inc="${x.productId}">+</button></div><button class="btn outline" data-remove="${x.productId}|${x.size || ""}">حذف</button></div></article>`,
             )
             .join(
               "",
@@ -589,7 +589,12 @@ document.addEventListener("click", (e) => {
     }
   }
   if (remove) {
-    state.cart = state.cart.filter((x) => x.productId != remove.dataset.remove);
+    const [productId, size] = remove.dataset.remove.split("|");
+
+    state.cart = state.cart.filter(
+      (x) => !(String(x.productId) === productId && x.size === size),
+    );
+
     save();
     cartPage();
   }
