@@ -431,6 +431,7 @@ function sendWhatsApp(message) {
     "_blank",
   );
 }
+
 function checkout() {
   const rows = state.cart
     .map((x) => ({
@@ -443,23 +444,109 @@ function checkout() {
 
   const total = rows.reduce((sum, x) => sum + x.p.pack_price * x.quantity, 0);
 
-  const message = [
-    "طلب جديد من لوزيتا",
-    "",
-    ...rows.map(
-      (x) =>
-        `- ${x.p.name}
-المقاس: ${x.size || "غير محدد"}
-اللون: ${x.color || "غير محدد"}
-الكمية: ${x.quantity} عبوة × ${x.p.pack_qty} قطعة
-السعر: ${money(x.p.pack_price * x.quantity)}`,
-    ),
-    "",
-    `الإجمالي: ${money(total)}`,
-  ].join("\n");
+  const deposit = total * 0.1;
+  const depositNumber = state.settings.deposit_number || "";
 
-  sendWhatsApp(message);
+  document.getElementById("checkoutModal")?.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "checkoutModal";
+  modal.className = "checkout-overlay";
+
+  modal.innerHTML = `
+    <div class="checkout-modal" dir="rtl">
+      <button type="button" class="checkout-close" id="closeCheckout"
+        aria-label="إغلاق">×</button>
+
+      <h2>تأكيد بيانات الطلب</h2>
+      <p class="checkout-description">
+        أدخل بياناتك وعنوان التوصيل لمتابعة طلبك.
+      </p>
+
+      <div class="deposit-summary">
+        <div class="deposit-row">
+          <span>إجمالي الفاتورة</span>
+          <strong>${money(total)}</strong>
+        </div>
+
+        <div class="deposit-row">
+          <span>العربون المطلوب (10%)</span>
+          <strong>${money(deposit)}</strong>
+        </div>
+
+        <div class="deposit-number">
+          <span>رقم تحويل العربون</span>
+          <strong id="depositNumber"></strong>
+        </div>
+
+        <p>
+          لتأكيد الطلب، حوّل العربون الموضح أعلاه إلى الرقم المحدد.
+          بعد تأكيد الطلب من الموقع، أرسل صورة التحويل على واتساب المتجر
+          مع تفاصيل طلبك.
+        </p>
+      </div>
+
+      <form id="checkoutForm" class="checkout-form">
+        <label>
+          الاسم بالكامل *
+          <input name="customerName" required maxlength="100"
+            placeholder="اكتب اسمك بالكامل">
+        </label>
+
+        <label>
+          رقم الهاتف *
+          <input name="customerPhone" required type="tel"
+            maxlength="20" placeholder="رقم الهاتف للتواصل">
+        </label>
+
+        <label>
+          المحافظة / المدينة *
+          <input name="city" required maxlength="100"
+            placeholder="مثال: القاهرة">
+        </label>
+
+        <label>
+          عنوان التوصيل بالتفصيل *
+          <textarea name="address" required rows="3" maxlength="500"
+            placeholder="الشارع، رقم العقار، الدور، وعلامة مميزة"></textarea>
+        </label>
+
+        <label>
+          ملاحظات إضافية
+          <textarea name="notes" rows="2" maxlength="500"
+            placeholder="أي تفاصيل إضافية (اختياري)"></textarea>
+        </label>
+
+        <p class="checkout-warning">
+          تنبيه: قيمة العربون 10% من إجمالي الفاتورة. تأكد من التحويل
+          للرقم الموضح، واحتفظ بصورة التحويل لإرسالها على واتساب المتجر.
+        </p>
+
+        <div class="checkout-actions">
+          <button type="submit" class="btn">
+            تأكيد البيانات والمتابعة إلى واتساب
+          </button>
+          <button type="button" class="btn btn-secondary"
+            id="cancelCheckout">رجوع للسلة</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  document.getElementById("depositNumber").textContent =
+    depositNumber || "لم يتم إعداد رقم التحويل";
+
+  document.getElementById("closeCheckout").onclick = document.getElementById(
+    "cancelCheckout",
+  ).onclick = () => modal.remove();
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.remove();
+  });
 }
+
 function route() {
   const hash = location.hash.slice(1) || "/";
   const [path] = hash.split("?");
@@ -512,6 +599,92 @@ $("#searchForm").onsubmit = (e) => {
   e.preventDefault();
   location.hash = "#/products?q=" + encodeURIComponent($("#searchInput").value);
 };
+
+document.addEventListener("submit", function (e) {
+  if (e.target.id !== "checkoutForm") return;
+
+  e.preventDefault();
+
+  const form = e.target;
+  if (!form.reportValidity()) return;
+
+  const whatsapp = state.settings.whatsapp || "";
+  const depositNumber = state.settings.deposit_number || "";
+
+  if (!whatsapp) {
+    toast("أضف رقم واتساب المتجر في شيت Settings");
+    return;
+  }
+
+  if (!depositNumber) {
+    toast("أضف رقم تحويل العربون في شيت Settings");
+    return;
+  }
+
+  const data = new FormData(form);
+
+  const customerName = data.get("customerName").trim();
+  const customerPhone = data.get("customerPhone").trim();
+  const city = data.get("city").trim();
+  const address = data.get("address").trim();
+  const notes = data.get("notes").trim();
+
+  const rows = state.cart
+    .map((x) => ({
+      ...x,
+      p: state.products.find((y) => y.id === x.productId),
+    }))
+    .filter((x) => x.p);
+
+  if (!rows.length) {
+    toast("السلة فارغة");
+    return;
+  }
+
+  const total = rows.reduce((sum, x) => sum + x.p.pack_price * x.quantity, 0);
+
+  const deposit = total * 0.1;
+
+  const message = [
+    "طلب جديد من لوزيتا",
+    "",
+    "بيانات العميل:",
+    `الاسم: ${customerName}`,
+    `رقم الهاتف: ${customerPhone}`,
+    `المحافظة / المدينة: ${city}`,
+    `عنوان التوصيل: ${address}`,
+    notes ? `ملاحظات: ${notes}` : "",
+    "",
+    "تفاصيل الطلب:",
+    ...rows.map(
+      (x) =>
+        `- ${x.p.name}
+المقاس: ${x.size || "غير محدد"}
+الكمية: ${x.quantity} عبوة × ${x.p.pack_qty} قطعة
+السعر: ${money(x.p.pack_price * x.quantity)}`,
+    ),
+    "",
+    `إجمالي الفاتورة: ${money(total)}`,
+    `العربون المطلوب (10%): ${money(deposit)}`,
+    `رقم تحويل العربون: ${depositNumber}`,
+    "",
+    "تعليمات العربون:",
+    "يرجى تحويل العربون إلى الرقم الموضح أعلاه.",
+    "بعد تأكيد الطلب من الموقع، سأرسل صورة التحويل على واتساب المتجر.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const modal = document.getElementById("checkoutModal");
+
+  window.open(
+    `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`,
+    "_blank",
+  );
+
+  modal?.remove();
+});
+
 $("#menuBtn").onclick = () => $("#nav").classList.toggle("open");
 window.addEventListener("hashchange", route);
 loadExcel();
