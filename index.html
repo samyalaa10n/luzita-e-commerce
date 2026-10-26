@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar-EG" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>لوزيتا | ملابس بالجملة</title>
+  <meta name="description"
+    content="لوزيتا متجر ملابس بالجملة بأسعار عبوات واضحة وتشكيلات متنوعة للتجار وأصحاب المحلات.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="announcement">★ أسعار الجملة الأفضل للتجار <span>•</span> شحن لجميع المحافظات <span>•</span> جودة مضمونة
+  </div>
+  <header class="header">
+    <div class="container nav">
+      <button class="icon-btn menu-btn" id="menuBtn">☰</button>
+      <a class="brand" href="#/"><strong>لوزيتا</strong><small>Luzita</small></a>
+      <nav id="nav">
+        <a href="#/">الرئيسية</a><a href="#/products">المنتجات</a><a href="#/products?cat=رجالي">رجالي</a>
+        <a href="#/products?cat=حريمي">حريمي</a><a href="#/products?cat=أطفال">أطفال</a><a href="#/about">من نحن</a><a
+          href="#/contact">تواصل معنا</a>
+      </nav>
+      <div class="nav-tools">
+        <form id="searchForm"><input id="searchInput" placeholder="ابحث بالاسم أو الرمز"><button>⌕</button></form>
+        <a class="icon-btn" href="#/favs">♡<b id="favCount">0</b></a>
+        <a class="icon-btn" href="#/cart">🛒<b id="cartCount">0</b></a>
+      </div>
+    </div>
+  </header>
+  <main id="app"></main>
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <div class="brand footer-brand"><strong>لوزيتا</strong><small>Luzita</small></div>
+        <p>متجر ملابس بالجملة للتجار وأصحاب المحلات، بعبوات وأسعار واضحة.</p>
+      </div>
+      <div>
+        <h4>التصنيفات</h4>
+        <div id="footerCats"></div>
+      </div>
+      <div>
+        <h4>روابط مهمة</h4><a href="#/products">كل المنتجات</a><a href="#/about">من نحن</a><a href="#/contact">تواصل
+          معنا</a>
+      </div>
+      <div>
+        <h4>تواصل معنا</h4>
+        <p id="contactInfo">واتساب: —<br>الهاتف: —<br>البريد: —</p>
+      </div>
+    </div>
+    <div class="container copyright">© لوزيتا — جميع الحقوق محفوظة</div>
+  </footer>
+  <div id="toast"></div>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
